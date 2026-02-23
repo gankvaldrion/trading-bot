@@ -89,7 +89,7 @@ def strategy_b(df):
                 })
     return pd.DataFrame(trades)
 
-def metrics(t, name):
+def metrics(t, name, initial_price):
     if t.empty:
         return None
     wins   = t[t["P&L $"] > 0]
@@ -98,10 +98,11 @@ def metrics(t, name):
     gl     = abs(losses["P&L $"].sum()) if not losses.empty else 0.0001
     eq     = t["P&L $"].cumsum()
     dd     = eq - eq.cummax()
+    retorno_pct = (t["P&L $"].sum() / initial_price) * 100
     return {
         "Estrategia": name,
         "Operaciones": len(t),
-        "Win Rate": f"{len(wins)/len(t)*100:.1f}%",
+        "Rendimiento %": f"{retorno_pct:.1f}%",
         "P&L Total": f"${t['P&L $'].sum():,.2f}",
         "Ganancia prom": f"${wins['P&L $'].mean():.2f}" if not wins.empty else "-",
         "Pérdida prom":  f"${losses['P&L $'].mean():.2f}" if not losses.empty else "-",
@@ -162,8 +163,9 @@ if run:
 
     ta = strategy_a(df)
     tb = strategy_b(df)
-    ma = metrics(ta, "A - Close-to-Close")
-    mb = metrics(tb, "B - Overnight")
+    initial_price = df["close"].iloc[0]
+    ma = metrics(ta, "A - Close-to-Close", initial_price)
+    mb = metrics(tb, "B - Overnight", initial_price)
 
     # Buy & Hold
     bh_pnl = df["close"].iloc[-1] - df["close"].iloc[0]
